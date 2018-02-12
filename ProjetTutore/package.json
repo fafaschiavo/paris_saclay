@@ -22,6 +22,8 @@
     "expo": "^25.0.0",
     "react": "16.2.0",
     "react-native": "0.52.0",
-    "react-native-svg-image": "^2.0.1"
+    "react-native-elevated-view": "0.0.6",
+    "react-native-svg-image": "^2.0.1",
+    "react-navigation": "^1.0.3"
   }
 }
