@@ -1,8 +1,30 @@
 import React, { Component } from 'react';
-import { StyleSheet, AppRegistry, Text, View, Image, TextInput, Button,
-    TouchableHighlight, TouchableOpacity, TouchableNativeFeedback, TouchableWithoutFeedback } from 'react-native';
+import {
+    StyleSheet,
+    AppRegistry,
+    Text,
+    View,
+    Image,
+    TextInput,
+    Button,
+    TouchableHighlight,
+    TouchableOpacity,
+    TouchableNativeFeedback,
+    TouchableWithoutFeedback,
+    ScrollView,
+    FlatList,
+    Alert,
+    Linking
+} from 'react-native';
 import { Font } from 'expo';
 import { StackNavigator, } from 'react-navigation';
+import {
+  Card,
+  CardImage,
+  CardTitle,
+  CardContent,
+  CardAction
+} from 'react-native-card-view';
 
 const styles = StyleSheet.create({
 
@@ -189,7 +211,112 @@ const styles = StyleSheet.create({
     error_message:{
         color: '#cf4332',
         marginTop: 5
-    }
+    },
+
+    content_container:{
+        width: '100%',
+        height: '100%',
+        marginTop: '10%',
+        flex: 1,
+        flexDirection: 'column',
+    },
+
+    content_card:{
+        width: '90%',
+        marginLeft: '5%',
+        marginBottom: '5%',
+        flexDirection: 'column',
+        backgroundColor: 'white',
+        elevation: 8,
+    },
+
+    card_image_container:{
+        width: null,
+        height: 300,
+    },
+
+    card_image: {
+        width: null,
+        height: '100%',
+        resizeMode: 'cover',
+    },
+
+    card_bottom_container:{
+        width: null,
+        height: '50%',
+        flex: 1,
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        paddingTop: 5,
+        paddingBottom: 10,
+    },
+
+    card_title_container:{
+        backgroundColor: '#ffffff',
+        padding: 10,
+        paddingTop: 5,
+        paddingBottom: 5,
+    },
+
+    card_description_container:{
+        backgroundColor: '#ffffff',
+        padding: 10,
+        paddingTop: 5,
+        paddingBottom: 5,
+    },
+
+    card_links_container:{
+        width: '100%',
+        backgroundColor: '#ffffff',
+        padding: 10,
+        paddingTop: 5,
+        paddingBottom: 5,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+    },
+
+    card_title:{
+        fontFamily: 'montserrat-bold',
+        fontSize: 15,
+    },
+
+    card_description:{
+        fontFamily: 'montserrat-light',
+        fontSize: 11.5,
+    },
+
+    card_like_button:{
+        width: 30,
+        height: 30,
+        resizeMode: 'cover',
+        alignSelf: 'flex-end', 
+        marginLeft: 10,
+    },
+
+    main_scrollview:{
+        flex: 1,
+        position: 'absolute',
+        top: 35,
+        left:0,
+        right:0,
+        bottom:0
+    },
+
+    card_date:{
+        alignSelf: 'flex-start',
+        fontFamily: 'montserrat-bold',
+        fontSize: 11.5,
+    },
+
+    date_subcontainer:{
+
+    },
+
+    buttons_subcontainer:{
+        flexDirection: 'row',
+        justifyContent: 'flex-end' 
+    },
 
 });
 
@@ -197,8 +324,9 @@ const styles = StyleSheet.create({
 // Navy Blue - #1e0060
 // Ligh Grey - #f7f7f7
 
-const API_DOMAIN_NAME = "http://3c16dfee.ngrok.io/";
+const API_DOMAIN_NAME = "http://99c602e8.ngrok.io/";
 const LOGIN_MEMBER_URL = "login-member-google/";
+const GET_AVAILABLE_EVENTS = "get-available-events/";
 
 
 
@@ -300,8 +428,7 @@ class HomePage extends Component {
     }
 
     render() {
-        console.log('Here -------------------------------')
-
+        console.log('Rendering HomePage')
         return (
             <View style={styles.full_screen_container}>
                 <View style={styles.full_screen_container}>
@@ -371,7 +498,7 @@ class HomePage extends Component {
 
 
 
-class SignupPage extends Component {
+class ContentPage extends Component {
     static navigationOptions = {
         title: 'Signup',
         headerTitleStyle: {
@@ -382,8 +509,35 @@ class SignupPage extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            fontsLoaded: false
+            fontsLoaded: false,
+            event_loaded: false,
+            current_event_list: []
         };
+
+        this.refreshEventList = this.refreshEventList.bind(this);
+        this.handleFacebookClick = this.handleFacebookClick.bind(this);
+        this.likeEvent = this.likeEvent.bind(this);
+    }
+
+    refreshEventList(){
+
+        fetch(API_DOMAIN_NAME + GET_AVAILABLE_EVENTS, {
+            method: 'GET',
+            parent_element: this,
+        })
+        .then((response) => {
+            var responseJson = JSON.parse(response._bodyInit);
+            for (var i = responseJson.length - 1; i >= 0; i--) {
+                if (responseJson[i].website == 'none') {
+                    responseJson[i].website = false;
+                }
+                if (responseJson[i].facebook_event_link == 'none') {
+                    responseJson[i].facebook_event_link = false;
+                }
+            }
+            this.setState({current_event_list: responseJson});
+
+        })
     }
 
     async componentDidMount(){
@@ -401,69 +555,93 @@ class SignupPage extends Component {
     }
 
 
-    render() {
-        console.log('Here -------------------------------')
+    handleFacebookClick(url_to_access){        
+        console.log(url_to_access);
+        Linking.canOpenURL(url_to_access).then(supported => {
+            if (supported) {
+                Linking.openURL(url_to_access);
+            } else {
+                Alert.alert('Sorry, your browser is not supported...')
+            }
+        });
 
+    }
+
+    likeEvent(){
+        Alert.alert('I like this!')
+    }
+
+    render() {
+        console.log('Rendering ContentPage');
+        if (!this.state.event_loaded) {
+            this.refreshEventList();
+            this.state.event_loaded = true;
+        }
         return (
-            <View style={styles.full_screen_container}>
+
+            <View style={{flex: 1}}>
                 <View style={styles.full_screen_container}>
                     <Image style={styles.background_image} source={{ uri: 'https://s3.eu-west-3.amazonaws.com/paris-saclay/background_1-01.png' }} />
                 </View>
-                <View style={styles.full_screen_container}>
-                    <Image style={styles.saclay_logo} source={{ uri: 'https://s3.eu-west-3.amazonaws.com/paris-saclay/logo_paris_saclay_big.png' }} />
-                </View>
-                <View style={[styles.full_screen_container, styles.login_container]}>
-                    <View style={{flex: 1}} />
-                    <View style={{flex: 2, alignItems: 'center'}}>
-                        {this.state.fontsLoaded &&
-                        // <Text style={styles.home_text_title}>But now, it's a real mobile app 2</Text>
-                        [
-                        <View style={{flex: 2}} />,
-                        <TextInput
-                            style={styles.text_input_field}
-                            onChangeText={(text) => this.setState({text})}
-                            value={this.state.text}
-                            underlineColorAndroid="transparent"
-                        />,
-                        <View style={{flex: 1}} />,
-                        <TextInput
-                            style={styles.text_input_field}
-                            onChangeText={(text) => this.setState({text})}
-                            value={this.state.text}
-                            underlineColorAndroid="transparent"
-                        />,
-                        <View style={{flex: 1}} />,
-                        <View style={styles.buttons_container}>
-                            <TouchableOpacity style={{elevation: 3}} onPress={this._onPressButton}>
-                                <View style={[styles.generic_button_white, styles.sign_up_button]}>
-                                    <Text style={styles.generic_button_white_text}>SIGN UP2</Text>
+                {this.state.fontsLoaded &&
+                <FlatList
+                    data={this.state.current_event_list}
+                    style={styles.main_scrollview}
+                    renderItem={
+                        ({item}) =>
+                            <View style={styles.content_card}>
+                                <View style={styles.card_image_container}>
+                                    <Image style={styles.card_image} source={{ uri: item.featured_image }} />
                                 </View>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={{elevation: 3}} onPress={this._onPressButton}>
-                                <View style={[styles.generic_button_white, styles.sign_up_button]}>
-                                    <Text style={styles.generic_button_white_text}
-                                    onPress={() => this.props.navigation.navigate('Home')}
-                                    >
-                                    LOGIN2
-                                    </Text>
+                                <View style={styles.card_bottom_container}>
+                                    <View style={styles.card_title_container}>
+                                        <Text style={styles.card_title}>
+                                            {item.event_title}
+                                        </Text>
+                                    </View>
+                                    <View style={styles.card_description_container}>
+                                        <Text style={styles.card_description}>
+                                            {item.short_description}
+                                        </Text>
+                                    </View>
+                                    <View style={styles.card_links_container}>
+                                        <View style={styles.date_subcontainer}>
+                                            <Text style={styles.card_date}>
+                                                {item.date}
+                                            </Text>
+                                        </View>
+                                        <View style={styles.buttons_subcontainer}>
+                                            { item.website &&
+                                            <TouchableHighlight onPress={() => { this.handleFacebookClick( item.website ) }}  underlayColor="#1e0060">
+                                                <Image style={styles.card_like_button} source={{ uri: 'https://s3.eu-west-3.amazonaws.com/paris-saclay/icons/grid-world.png' }} />
+                                            </TouchableHighlight>
+                                            }
+                                            { item.facebook_event_link &&
+                                            <TouchableHighlight onPress={() => { this.handleFacebookClick( item.facebook_event_link ) }}  underlayColor="#1e0060">
+                                                <Image style={styles.card_like_button} source={{ uri: 'https://s3.eu-west-3.amazonaws.com/paris-saclay/icons/facebook-logo-button.png' }} />
+                                            </TouchableHighlight>
+                                            }
+                                            <TouchableHighlight onPress={this.likeEvent}  underlayColor="white">
+                                                <Image style={styles.card_like_button} source={{ uri: 'https://s3.eu-west-3.amazonaws.com/paris-saclay/icons/like-empty-01.png' }} />
+                                            </TouchableHighlight>
+                                        </View>
+                                    </View>
                                 </View>
-                            </TouchableOpacity>
-                        </View>,
-                        <View style={{flex: 2}} />
-                        ]
-                        }
-                    </View>
-                    <View style={{flex: 1}} />
-                </View>
+                            </View>
+                    }
+                />
+                }
             </View>
+
         );
     }
 }
 
 export default StackNavigator(
     {
-        Home: { screen: HomePage },
-        Signup: { screen: SignupPage },
+        // Home: { screen: HomePage },
+        Home: { screen: ContentPage },
+        Signup: { screen: ContentPage },
     },
     {
         headerMode: 'none',
