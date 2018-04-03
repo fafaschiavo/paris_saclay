@@ -8,8 +8,10 @@ from projetTutore.models import *
 import json
 import string
 import random
-
-
+import pandas as pd
+import os
+import datetime
+from dateutil import parser
 
 
 
@@ -57,3 +59,72 @@ def login_member_google(request):
 		member_object = member_object[0]
 
 	return JsonResponse({'member_hash':member_object.hash_id})
+
+def import_default_events(request):
+	file_name = 'default_input.xlsx'
+	THIS_FOLDER = os.path.dirname(os.path.abspath(__file__))
+	my_file = os.path.join(THIS_FOLDER, file_name)
+	dfs = pd.read_excel(my_file, sheet_name=None)
+
+	for index, row in dfs['Sheet1'].iterrows():
+		event_title = row['Event Title']
+		short_description = row['Short Description']
+		long_description = row['Long Description']
+		date = row['Date']
+		hour = row['Hour']
+		location = row['Location']
+		address = row['Address']
+		latitude = row['Latitude']
+		longitude = row['Longitude']
+		facebook_event_link = row['Facebook Event Link']
+		website = row['Website']
+		featured_image = row['Featured image']
+
+
+		new_date = str(date).split(' ')[0] + ' ' + str(hour)
+		new_date = parser.parse(new_date)
+
+		event_objects = events.objects.filter(event_title = event_title)
+		if len(event_objects) > 0:
+			pass
+		else:
+			new_object = events(
+				event_title = event_title,
+				short_description = short_description,
+				long_description = long_description,
+				date = new_date,
+				location = location,
+				address = address,
+				latitude = float(latitude),
+				longitude = float(longitude),
+				facebook_event_link = facebook_event_link,
+				website = website,
+				featured_image = featured_image,
+			)
+			new_object.save()
+
+	return HttpResponse(200)
+
+def get_available_events(request):
+	available_events = events.objects.all().order_by('date')
+
+	available_events_array = []
+	for event in available_events:
+		new_event = {}
+		new_event['key'] = event.id
+		new_event['event_title'] = event.event_title
+		new_event['short_description'] = event.short_description
+		new_event['long_description'] = event.long_description
+		new_event['date'] = event.date.strftime("%d/%m/%Y %H:%M")
+		new_event['location'] = event.location
+		new_event['address'] = event.address
+		new_event['latitude'] = event.latitude
+		new_event['longitude'] = event.longitude
+		new_event['facebook_event_link'] = event.facebook_event_link
+		new_event['website'] = event.website
+		new_event['featured_image'] = event.featured_image
+		available_events_array.append(new_event)
+
+	available_events_array = list(reversed(available_events_array))
+
+	return JsonResponse(available_events_array, safe = False)

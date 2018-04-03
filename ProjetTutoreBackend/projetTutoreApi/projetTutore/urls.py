@@ -6,4 +6,6 @@ from . import views
 urlpatterns = [
     url(r'^$', views.index, name='index'),
     url(r'^login-member-google/', views.login_member_google, name='login_member_google'),
+    url(r'^get-available-events/', views.get_available_events, name='get_available_events'),
+    url(r'^import-default-events/', views.import_default_events, name='import_default_events'), #To add default events
 ]
