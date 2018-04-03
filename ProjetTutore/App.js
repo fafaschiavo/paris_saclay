@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
 // Navy Blue - #1e0060
 // Ligh Grey - #f7f7f7
 
-const API_DOMAIN_NAME = "http://99c602e8.ngrok.io/";
+const API_DOMAIN_NAME = "http://ed1d2dd2.ngrok.io/";
 const LOGIN_MEMBER_URL = "login-member-google/";
 const GET_AVAILABLE_EVENTS = "get-available-events/";
 
@@ -511,7 +511,8 @@ class ContentPage extends Component {
         this.state = {
             fontsLoaded: false,
             event_loaded: false,
-            current_event_list: []
+            current_event_list: [],
+            show_liked: false,
         };
 
         this.refreshEventList = this.refreshEventList.bind(this);
@@ -534,6 +535,8 @@ class ContentPage extends Component {
                 if (responseJson[i].facebook_event_link == 'none') {
                     responseJson[i].facebook_event_link = false;
                 }
+                responseJson[i].show_liked = false;
+                responseJson[i].id = i;
             }
             this.setState({current_event_list: responseJson});
 
@@ -567,8 +570,11 @@ class ContentPage extends Component {
 
     }
 
-    likeEvent(){
-        Alert.alert('I like this!')
+    likeEvent(item_id){
+        console.log('Trigger')
+        var current_list = this.state.current_event_list;
+        current_list[item_id].show_liked = !current_list[item_id].show_liked;
+        this.setState({current_event_list: current_list});
     }
 
     render() {
@@ -621,9 +627,16 @@ class ContentPage extends Component {
                                                 <Image style={styles.card_like_button} source={{ uri: 'https://s3.eu-west-3.amazonaws.com/paris-saclay/icons/facebook-logo-button.png' }} />
                                             </TouchableHighlight>
                                             }
-                                            <TouchableHighlight onPress={this.likeEvent}  underlayColor="white">
-                                                <Image style={styles.card_like_button} source={{ uri: 'https://s3.eu-west-3.amazonaws.com/paris-saclay/icons/like-empty-01.png' }} />
-                                            </TouchableHighlight>
+                                            { item.show_liked &&
+                                                <TouchableHighlight onPress={() => this.likeEvent(item.id)}  underlayColor="white">
+                                                    <Image style={styles.card_like_button} source={{ uri: 'https://s3.eu-west-3.amazonaws.com/paris-saclay/icons/like-filled-01.png' }} />
+                                                </TouchableHighlight>
+                                            }
+                                            { !item.show_liked &&
+                                                <TouchableHighlight onPress={() => this.likeEvent(item.id)}  underlayColor="white">
+                                                    <Image style={styles.card_like_button} source={{ uri: 'https://s3.eu-west-3.amazonaws.com/paris-saclay/icons/like-empty-01.png' }} />
+                                                </TouchableHighlight>
+                                            }
                                         </View>
                                     </View>
                                 </View>
