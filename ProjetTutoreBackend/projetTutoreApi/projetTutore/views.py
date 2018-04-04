@@ -66,7 +66,8 @@ def import_default_events(request):
 	my_file = os.path.join(THIS_FOLDER, file_name)
 	dfs = pd.read_excel(my_file, sheet_name=None)
 
-	for index, row in dfs['Sheet1'].iterrows():
+	# for index, row in dfs['Sheet1'].iterrows():
+	for index, row in dfs.iterrows():
 		event_title = row['Event Title']
 		short_description = row['Short Description']
 		long_description = row['Long Description']
@@ -105,7 +106,13 @@ def import_default_events(request):
 
 	return HttpResponse(200)
 
+@csrf_exempt
 def get_available_events(request):
+	data_json = request.body.decode('utf-8')
+	data = json.loads(data_json)
+	member_hash_id = data['member_hash_id']
+	member_object = members.objects.get(hash_id = member_hash_id)
+
 	available_events = events.objects.all().order_by('date')
 
 	available_events_array = []
@@ -123,8 +130,42 @@ def get_available_events(request):
 		new_event['facebook_event_link'] = event.facebook_event_link
 		new_event['website'] = event.website
 		new_event['featured_image'] = event.featured_image
+
+		likes_object = likes.objects.filter(member_id = member_object.id).filter(event_id = event.id)
+		if len(likes_object) > 0:
+			new_event['is_liked'] = likes_object[0].is_active
+		else:
+			new_event['is_liked'] = 0
+
 		available_events_array.append(new_event)
 
 	available_events_array = list(reversed(available_events_array))
 
 	return JsonResponse(available_events_array, safe = False)
+
+@csrf_exempt
+def update_like_status(request):
+	data_json = request.body.decode('utf-8')
+	data = json.loads(data_json)
+	event_id = data['event_id']
+	status = data['status']
+	member_hash_id = data['member_hash_id']
+	member_object = members.objects.get(hash_id = member_hash_id)
+
+	likes_object = likes.objects.filter(member_id = member_object.id).filter(event_id = event_id)
+	if len(likes_object) > 0:
+		like_object = likes_object[0]
+	else:
+		like_object = likes(member_id = member_object.id, event_id = event_id)
+
+	like_object.is_active = int(status)
+	like_object.save()
+
+	return HttpResponse(200)
+
+
+
+
+
+
+
